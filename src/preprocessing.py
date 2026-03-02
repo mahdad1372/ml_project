@@ -29,39 +29,33 @@ def count_kmers(sequence: str, k: int = 3) -> dict:
 # -----------------------------
 # 4. Encode DNA sequences into features
 # -----------------------------
-def encode_kmers(df: pd.DataFrame, required_features: list = None) -> pd.DataFrame:
-    """
-    Convert DNA sequences to k-mer counts and other features.
-    If required_features is given, ensures all are present.
-    """
-    # Count kmers
+def encode_kmers(df: pd.DataFrame, required_features: list = None):
+
     kmer_counts = df["DNA_Sequence"].apply(lambda x: count_kmers(x, 3))
-    kmer_df = pd.DataFrame(kmer_counts.tolist()).fillna(0).astype(int)
-    
-    # Add sequence-level features
+    kmer_df = pd.DataFrame(kmer_counts.tolist()).fillna(0)
+
     df_features = pd.DataFrame({
         "Sequence_Length": df["DNA_Sequence"].apply(len),
         "GC_Content": df["DNA_Sequence"].apply(lambda s: (s.count("G") + s.count("C")) / len(s)),
         "AT_Content": df["DNA_Sequence"].apply(lambda s: (s.count("A") + s.count("T")) / len(s))
     })
-    
+
     df_encoded = pd.concat([df_features, kmer_df], axis=1)
-    
-    # Drop columns that are not needed
-    for col in ["DNA_Sequence", "Sample_ID"]:
-        if col in df_encoded.columns:
-            df_encoded = df_encoded.drop(columns=[col])
-    
-    # Ensure all required features exist (for API or model input)
+
+    # 🔥 THIS PART FIXES YOUR ERROR
     if required_features is not None:
         for col in required_features:
             if col not in df_encoded.columns:
                 df_encoded[col] = 0
-        # Reorder columns exactly as required
-        df_encoded = df_encoded[required_features]
-    
-    return df_encoded
 
+        df_encoded = df_encoded[required_features]
+
+    return df_encoded
+def get_kmers(sequence, k=3):
+    # This creates a list of 3-letter chunks
+    return [sequence[x:x+k] for x in range(len(sequence) - k + 1)]
+
+# Example: "ATGC" -> ["ATG", "TGC"]
 # -----------------------------
 # 5. Scale features (for training)
 # -----------------------------

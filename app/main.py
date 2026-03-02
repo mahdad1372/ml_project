@@ -49,23 +49,15 @@ def health_check():
 # -----------------------------
 @app.post("/predict")
 def predict(payload: DNAPayload):
-    """
-    Predict Cancer_Status from a DNA sequence.
-    """
     try:
-        # Create DataFrame with dummy Sample_ID for compatibility
         df = pd.DataFrame({
-            "Sample_ID": [0],
             "DNA_Sequence": [payload.dna_sequence]
         })
 
-        # Encode DNA sequence to features
-        df_encoded = encode_kmers(df)
+        # Tell encoder what features are required
+        required_features = list(model.feature_names_in_)
+        df_encoded = encode_kmers(df, required_features=required_features)
 
-        # Align features with model
-        df_encoded = df_encoded[model.feature_names_in_]
-
-        # Make prediction
         prediction = model.predict(df_encoded)
         prediction_proba = model.predict_proba(df_encoded)[:, 1]
 
